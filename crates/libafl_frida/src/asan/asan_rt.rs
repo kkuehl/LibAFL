@@ -489,12 +489,17 @@ impl FridaRuntime for AsanRuntime {
             self.register_hooks(gum);
         }
         self.generate_instrumentation_blobs();
-        // On Windows the shadow is committed on demand (see `Allocator::map_shadow_for_region`),
-        // so eagerly unpoisoning *all* existing memory — an address-space-sized shadow commit —
-        // is both unnecessary and extremely slow there. The fuzz input is unpoisoned by
-        // `pre_exec` and fresh allocations by `alloc`, so skipping it on Windows is fine.
+        // Eagerly unpoison existing memory so the shadow is mapped for the
+        // process's stack/globals before the fuzz loop starts. This allocates
+        // and frees a `Vec<MmapMut>` internally while the allocator lock is
+        // held; run it under the re-entrancy guard so the `free`/`munmap` hooks
+        // (which are `always_enabled`) don't re-enter `allocator_mut()` and
+        // self-deadlock.
         #[cfg(not(windows))]
-        self.unpoison_all_existing_memory();
+        {
+            let _in_hook = AsanInHookGuard::new();
+            self.unpoison_all_existing_memory();
+        }
         self.register_thread();
     }
 
@@ -923,12 +928,21 @@ impl AsanRuntime {
             "registering thread {:?} with stack {stack_start:x}:{stack_end:x} and tls {tls_start:x}:{tls_end:x}",
             get_thread_id()
         );
-        self.allocator_mut()
-            .map_shadow_for_region(stack_start, stack_end, true);
+        // `map_shadow_for_region` allocates/frees a `Vec<MmapMut>` while the
+        // allocator lock is held; guard against the `free`/`munmap` hooks
+        // re-entering `allocator_mut()` and self-deadlocking.
+        {
+            let _in_hook = AsanInHookGuard::new();
+            self.allocator_mut()
+                .map_shadow_for_region(stack_start, stack_end, true);
+        }
 
         #[cfg(unix)]
-        self.allocator_mut()
-            .map_shadow_for_region(tls_start, tls_end, true);
+        {
+            let _in_hook = AsanInHookGuard::new();
+            self.allocator_mut()
+                .map_shadow_for_region(tls_start, tls_end, true);
+        }
     }
 
     /// Register the current thread with the runtime, implementing shadow memory for its stack mapping.
