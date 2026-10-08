@@ -1830,152 +1830,155 @@ impl AsanRuntime {
             (s: *mut c_void, size: u32, stream: *mut c_void),
             *mut c_void
         );
-        hook_func!(
+        #[cfg(not(target_os = "linux"))]
+        {
+            hook_func!(
 
-            memcmp,
-            (s1: *const c_void, s2: *const c_void, n: usize),
-            i32
-        );
-        hook_func!(
+                memcmp,
+                (s1: *const c_void, s2: *const c_void, n: usize),
+                i32
+            );
+            hook_func!(
 
-            memcpy,
-            (dest: *mut c_void, src: *const c_void, n: usize),
-            *mut c_void
-        );
-        #[cfg(not(any(target_vendor = "apple", windows)))]
-        hook_func!(
+                memcpy,
+                (dest: *mut c_void, src: *const c_void, n: usize),
+                *mut c_void
+            );
+            #[cfg(not(any(target_vendor = "apple", windows)))]
+            hook_func!(
 
-            mempcpy,
-            (dest: *mut c_void, src: *const c_void, n: usize),
-            *mut c_void
-        );
-        // #[cfg(not(windows))]
-        // hook_func!(
-        //     None,
-        //     memmove,
-        //     (dest: *mut c_void, src: *const c_void, n: usize),
-        //     *mut c_void
-        // );
-        hook_func!(
+                mempcpy,
+                (dest: *mut c_void, src: *const c_void, n: usize),
+                *mut c_void
+            );
+            // #[cfg(not(windows))]
+            // hook_func!(
+            //     None,
+            //     memmove,
+            //     (dest: *mut c_void, src: *const c_void, n: usize),
+            //     *mut c_void
+            // );
+            hook_func!(
 
-            memset,
-            (s: *mut c_void, c: i32, n: usize),
-            *mut c_void
-        );
-        hook_func!(
+                memset,
+                (s: *mut c_void, c: i32, n: usize),
+                *mut c_void
+            );
+            hook_func!(
 
-            memchr,
-            (s: *mut c_void, c: i32, n: usize),
-            *mut c_void
-        );
-        #[cfg(not(any(target_vendor = "apple", windows)))]
-        hook_func!(
+                memchr,
+                (s: *mut c_void, c: i32, n: usize),
+                *mut c_void
+            );
+            #[cfg(not(any(target_vendor = "apple", windows)))]
+            hook_func!(
 
-            memrchr,
-            (s: *mut c_void, c: i32, n: usize),
-            *mut c_void
-        );
-        #[cfg(not(windows))]
-        hook_func!(
+                memrchr,
+                (s: *mut c_void, c: i32, n: usize),
+                *mut c_void
+            );
+            #[cfg(not(windows))]
+            hook_func!(
 
-            memmem,
-            (
-                haystack: *const c_void,
-                haystacklen: usize,
-                needle: *const c_void,
-                needlelen: usize
-            ),
-            *mut c_void
-        );
-        #[cfg(not(any(target_os = "android", windows)))]
-        hook_func!(bzero, (s: *mut c_void, n: usize), usize);
-        #[cfg(not(any(target_os = "android", target_vendor = "apple", windows)))]
-        hook_func!(explicit_bzero, (s: *mut c_void, n: usize),usize);
-        // #[cfg(not(any(target_os = "android", windows)))]
-        // hook_func!(
-        //     None,
-        //     bcmp,
-        //     (s1: *const c_void, s2: *const c_void, n: usize),
-        //     i32
-        // );
-        hook_func!(strchr, (s: *mut c_char, c: i32), *mut c_char);
-        hook_func!(strrchr, (s: *mut c_char, c: i32), *mut c_char);
-        #[cfg(not(windows))]
-        hook_func!(
+                memmem,
+                (
+                    haystack: *const c_void,
+                    haystacklen: usize,
+                    needle: *const c_void,
+                    needlelen: usize
+                ),
+                *mut c_void
+            );
+            #[cfg(not(any(target_os = "android", windows)))]
+            hook_func!(bzero, (s: *mut c_void, n: usize), usize);
+            #[cfg(not(any(target_os = "android", target_vendor = "apple", windows)))]
+            hook_func!(explicit_bzero, (s: *mut c_void, n: usize),usize);
+            // #[cfg(not(any(target_os = "android", windows)))]
+            // hook_func!(
+            //     None,
+            //     bcmp,
+            //     (s1: *const c_void, s2: *const c_void, n: usize),
+            //     i32
+            // );
+            hook_func!(strchr, (s: *mut c_char, c: i32), *mut c_char);
+            hook_func!(strrchr, (s: *mut c_char, c: i32), *mut c_char);
+            #[cfg(not(windows))]
+            hook_func!(
 
-            strcasecmp,
-            (s1: *const c_char, s2: *const c_char),
-            i32
-        );
-        #[cfg(not(windows))]
-        hook_func!(
+                strcasecmp,
+                (s1: *const c_char, s2: *const c_char),
+                i32
+            );
+            #[cfg(not(windows))]
+            hook_func!(
 
-            strncasecmp,
-            (s1: *const c_char, s2: *const c_char, n: usize),
-            i32
-        );
-        hook_func!(
+                strncasecmp,
+                (s1: *const c_char, s2: *const c_char, n: usize),
+                i32
+            );
+            hook_func!(
 
-            strcat,
-            (dest: *mut c_char, src: *const c_char),
-            *mut c_char
-        );
-        hook_func!(strcmp, (s1: *const c_char, s2: *const c_char), i32);
-        hook_func!(
+                strcat,
+                (dest: *mut c_char, src: *const c_char),
+                *mut c_char
+            );
+            hook_func!(strcmp, (s1: *const c_char, s2: *const c_char), i32);
+            hook_func!(
 
-            strncmp,
-            (s1: *const c_char, s2: *const c_char, n: usize),
-            i32
-        );
-        hook_func!(
+                strncmp,
+                (s1: *const c_char, s2: *const c_char, n: usize),
+                i32
+            );
+            hook_func!(
 
-            strcpy,
-            (dest: *mut c_char, src: *const c_char),
-            *mut c_char
-        );
-        hook_func!(
+                strcpy,
+                (dest: *mut c_char, src: *const c_char),
+                *mut c_char
+            );
+            hook_func!(
 
-            strncpy,
-            (dest: *mut c_char, src: *const c_char, n: usize),
-            *mut c_char
-        );
-        #[cfg(not(windows))]
-        hook_func!(
+                strncpy,
+                (dest: *mut c_char, src: *const c_char, n: usize),
+                *mut c_char
+            );
+            #[cfg(not(windows))]
+            hook_func!(
 
-            stpcpy,
-            (dest: *mut c_char, src: *const c_char),
-            *mut c_char
-        );
-        #[cfg(not(windows))]
-        hook_func!(strdup, (s: *const c_char), *mut c_char);
-        #[cfg(windows)]
-        hook_func!(_strdup, (s: *const c_char), *mut c_char);
-        hook_func!(strlen, (s: *const c_char), usize);
-        hook_func!(strnlen, (s: *const c_char, n: usize), usize);
-        hook_func!(
+                stpcpy,
+                (dest: *mut c_char, src: *const c_char),
+                *mut c_char
+            );
+            #[cfg(not(windows))]
+            hook_func!(strdup, (s: *const c_char), *mut c_char);
+            #[cfg(windows)]
+            hook_func!(_strdup, (s: *const c_char), *mut c_char);
+            hook_func!(strlen, (s: *const c_char), usize);
+            hook_func!(strnlen, (s: *const c_char, n: usize), usize);
+            hook_func!(
 
-            strstr,
-            (haystack: *const c_char, needle: *const c_char),
-            *mut c_char
-        );
-        #[cfg(not(windows))]
-        hook_func!(
+                strstr,
+                (haystack: *const c_char, needle: *const c_char),
+                *mut c_char
+            );
+            #[cfg(not(windows))]
+            hook_func!(
 
-            strcasestr,
-            (haystack: *const c_char, needle: *const c_char),
-            *mut c_char
-        );
-        hook_func!(atoi, (nptr: *const c_char), i32);
-        hook_func!(atol, (nptr: *const c_char), i32);
-        hook_func!(atoll, (nptr: *const c_char), i64);
-        hook_func!(wcslen, (s: *const wchar_t), usize);
-        hook_func!(
+                strcasestr,
+                (haystack: *const c_char, needle: *const c_char),
+                *mut c_char
+            );
+            hook_func!(atoi, (nptr: *const c_char), i32);
+            hook_func!(atol, (nptr: *const c_char), i32);
+            hook_func!(atoll, (nptr: *const c_char), i64);
+            hook_func!(wcslen, (s: *const wchar_t), usize);
+            hook_func!(
 
-            wcscpy,
-            (dest: *mut wchar_t, src: *const wchar_t),
-            *mut wchar_t
-        );
-        hook_func!(wcscmp, (s1: *const wchar_t, s2: *const wchar_t), i32);
+                wcscpy,
+                (dest: *mut wchar_t, src: *const wchar_t),
+                *mut wchar_t
+            );
+            hook_func!(wcscmp, (s1: *const wchar_t, s2: *const wchar_t), i32);
+        }
         #[cfg(target_vendor = "apple")]
         hook_func!(
 

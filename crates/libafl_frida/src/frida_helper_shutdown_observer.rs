@@ -13,7 +13,6 @@ use serde::{
 };
 
 use crate::helper::{FridaInstrumentationHelper, FridaRuntimeTuple};
-#[cfg(windows)]
 use crate::asan::asan_rt::AsanRuntime;
 
 #[allow(clippy::unsafe_derive_deserialize)]
@@ -65,22 +64,15 @@ where
 {
     fn post_exec(&mut self, state: &mut S, input: &I, exit_kind: &ExitKind) -> Result<(), Error> {
         if *exit_kind == ExitKind::Crash {
-            // On Windows the crash is a native access violation / guard-page fault;
-            // tearing the Stalker down after a hard fault throws a C++ exception
-            // (CPP_EH_EXCEPTION) that re-enters the crash handler and aborts the
-            // save. Skip the full teardown, but still disable the ASan allocator
-            // hooks so the crash handler's allocations don't re-enter them.
-            #[cfg(windows)]
-            {
-                AsanRuntime::disable_asan_hooks_global();
-                return Ok(());
-            }
-
-            // Custom implementation logic for `FridaInProcessExecutor`
-            log::error!("Custom post_exec called for FridaInProcessExecutorHelper");
-            // Add any custom logic specific to FridaInProcessExecutor
-            let target_bytes = self.converter.convert_to_target_bytes(state, input);
-            return self.helper.borrow_mut().post_exec(target_bytes.as_ref());
+            // Tearing the Stalker/Frida helper down after a crash re-enters the
+            // crash handler (a "double crash"): on Windows the hard fault throws a
+            // C++ exception, and on Linux the shadow-detected error already
+            // panicked/aborted, so the teardown faults again — which clears the
+            // handler data and drops the very crash we're trying to save.
+            // Skip the full teardown and only disable the ASan allocator hooks so
+            // the crash handler's own allocations don't re-enter them.
+            AsanRuntime::disable_asan_hooks_global();
+            return Ok(());
         }
         Ok(())
     }
